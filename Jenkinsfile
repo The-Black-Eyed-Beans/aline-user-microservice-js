@@ -16,16 +16,18 @@ pipeline {
         }
         stage('Dockerize') {
             steps {
-                withAWS(credentials: 'aws-credentials', region: 'us-west-1') {
-                    sh "docker build -t user-microservice-js ."
-                    sh "docker tag user-microservice-js:latest 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js:latest"
-                    sh "docker push 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js:latest"
+                script{
+                    image = docker.build user-microservice-js
                 }
             }
         }
         stage('Push') {
             steps {
-                echo 'Already pushed!'
+                script {
+                    docker.withRegistry("086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js", "ecr:us-east-1:wc-ecr-access") {
+                        image.push('latest')
+                    } 
+                }  
             }
         }
     }
