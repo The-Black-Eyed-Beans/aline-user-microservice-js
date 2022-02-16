@@ -115,7 +115,7 @@ public class UserConfirmationService {
         variables.put("landingPortalUrl", landingPortalUrl);
         variables.put("confirmationLink", confirmationLink);
 
-        emailService.sendHtmlEmail(subject, template, email, variables);
+        // emailService.sendHtmlEmail(subject, template, email, variables);
     }
 
 }
