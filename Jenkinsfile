@@ -14,9 +14,18 @@ pipeline {
                 echo 'Testing! For real!'
             }
         }
-        stage('Deploy') {
+        stage('Dockerize') {
             steps {
-                echo 'It is deploying, for sure'
+                withAWS(credentials: 'aws-credentials', region: 'us-west-1') {
+                    sh "docker build -t user-microservice-js ."
+                    sh "docker tag user-microservice-js:latest 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js:latest"
+                    sh "docker push 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js:latest"
+                }
+            }
+        }
+        stage('Push') {
+            steps {
+                echo 'Already pushed!'
             }
         }
     }
