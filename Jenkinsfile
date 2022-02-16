@@ -11,12 +11,12 @@ pipeline {
         }
         stage('Test') {
             steps {
-
+                echo 'Testing! For real!'
             }
         }
         stage('Deploy') {
             steps {
-
+                echo 'It is deploying, for sure'
             }
         }
     }
