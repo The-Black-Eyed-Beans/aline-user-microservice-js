@@ -19,12 +19,12 @@ pipeline {
         stage('Build') {
             steps {
                 sh "git submodule init && git submodule update"
-                sh "mvn install"
+                sh "mvn install -Dmaven.test.skip=true"
             }
         }
         stage('Test') {
             steps {
-                echo 'Testing! For real!'
+                echo 'Tests go here'
             }
         }
         stage('Dockerize') {
