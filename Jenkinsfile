@@ -47,5 +47,11 @@ pipeline {
             }
             
         }
+        stage('Cleanup') {
+            steps {
+                sh "docker image ls"
+                sh "docker image rm user-microservice-js:latest"
+            }
+        }
     }
 }
