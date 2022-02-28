@@ -1,15 +1,25 @@
 pipeline {
     agent any
 
+    tools { 
+        maven 'Maven 3.8.4' 
+    }
+
     stages {
+        stage ('Initialize') {
+            steps {
+                // Verify path variables for mvn
+                sh '''
+                    echo "PATH = ${PATH}"
+                    echo "M2_HOME = ${M2_HOME}"
+                ''' 
+            }
+        }
+        
         stage('Build') {
             steps {
-                dir("user-microservice"){
-                    sh "export MAVEN_HOME=/var/jenkins_home/maven/apache-maven-3.6.3"
-                    sh "export PATH=$PATH:$MAVEN_HOME/bin"
-                    sh "mvn --version"
-                    sh "mvn clean package"
-                }
+                sh "git submodule init && git submodule update"
+                sh "mvn install"
             }
         }
         stage('Test') {
@@ -20,18 +30,22 @@ pipeline {
         stage('Dockerize') {
             steps {
                 script{
-                    image = docker.build user-microservice-js
+                    image = '''docker.build user-microservice-js'''
                 }
             }
         }
         stage('Push') {
+            
             steps {
                 script {
-                    docker.withRegistry("086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js", "ecr:us-east-1:wc-ecr-access") {
+                    // us-west-1.amazonaws.com/user-microservice-js
+                    docker.withRegistry("https://086620157175.dkr.ecr.us-west-1.amazonaws.com", "ecr:us-west-1:jenkins.aws.credentials.js") {
+                        def image = docker.build('user-microservice-js')
                         image.push('latest')
                     } 
                 }  
             }
+            
         }
     }
 }
