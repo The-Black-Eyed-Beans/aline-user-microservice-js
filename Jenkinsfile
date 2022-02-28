@@ -4,12 +4,19 @@ pipeline {
     tools { 
         maven 'Maven 3.8.4' 
     }
+    
+    environment {
+        AWS_ID = credentials("aws.id")
+        DEPLOYMENT_REGION = "us-west-1"
+        MICROSERVICE_NAME = "user-microservice-js"
+    }
 
     stages {
         stage ('Initialize') {
             steps {
                 // Verify path variables for mvn
                 sh '''
+                    echo "Preparing to build, test and deploy ${MICROSERVICE_NAME}"
                     echo "PATH = ${PATH}"
                     echo "M2_HOME = ${M2_HOME}"
                 ''' 
@@ -25,26 +32,24 @@ pipeline {
         }
         stage('Test') {
             steps {
-                echo 'Tests go here'
+                echo 'Testing happens here.'
             }
         }
+        
         stage('Push') {
-            
             steps {
                 script {
-                    // us-west-1.amazonaws.com/user-microservice-js
-                    docker.withRegistry("https://086620157175.dkr.ecr.us-west-1.amazonaws.com", "ecr:us-west-1:jenkins.aws.credentials.js") {
-                        def image = docker.build('user-microservice-js')
+                    docker.withRegistry("https://${AWS_ID}.dkr.ecr.${DEPLOYMENT_REGION}.amazonaws.com", "ecr:${DEPLOYMENT_REGION}:jenkins.aws.credentials.js") {
+                        def image = docker.build("${MICROSERVICE_NAME}")
                         image.push('latest')
                     } 
                 }  
             }
-            
         }
         stage('Cleanup') {
             steps {
-                sh "docker image rm user-microservice-js:latest"
-                sh "docker image rm 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js"
+                sh "docker image rm ${MICROSERVICE_NAME}:latest"
+                sh "docker image rm ${AWS_ID}.dkr.ecr.${DEPLOYMENT_REGION}.amazonaws.com/${MICROSERVICE_NAME}"
                 sh "docker image ls"
             }
         }
