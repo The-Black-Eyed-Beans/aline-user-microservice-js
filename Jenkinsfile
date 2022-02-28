@@ -18,20 +18,14 @@ pipeline {
         
         stage('Build') {
             steps {
-                sh "git submodule init && git submodule update"
+                sh "git submodule init"
+                sh "git submodule update"
                 sh "mvn install -Dmaven.test.skip=true"
             }
         }
         stage('Test') {
             steps {
                 echo 'Tests go here'
-            }
-        }
-        stage('Dockerize') {
-            steps {
-                script{
-                    image = '''docker.build user-microservice-js'''
-                }
             }
         }
         stage('Push') {
@@ -49,8 +43,9 @@ pipeline {
         }
         stage('Cleanup') {
             steps {
-                sh "docker image ls"
                 sh "docker image rm user-microservice-js:latest"
+                sh "docker image rm 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js"
+                sh "docker image ls"
             }
         }
     }
