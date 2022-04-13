@@ -7,7 +7,7 @@ pipeline {
     
     environment {
         AWS_ID = credentials("aws.id")
-        DEPLOYMENT_REGION = "us-west-1"
+        DEPLOYMENT_REGION = credentials("deployment.region")
         MICROSERVICE_NAME = "user-microservice-js"
     }
 
@@ -27,12 +27,22 @@ pipeline {
             steps {
                 sh "git submodule init"
                 sh "git submodule update"
-                sh "mvn install -Dmaven.test.skip=true"
+                sh "mvn clean package -Dmaven.test.skip=true"
             }
         }
-        stage('Test') {
-            steps {
-                echo 'Testing happens here.'
+        stage('Sonar Scan'){
+            steps{
+                withSonarQubeEnv('SonarQube-Server'){
+                    sh 'mvn verify sonar:sonar'
+                }
+            }
+        }
+        
+        stage('Quality Gate'){
+            steps{
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
         
@@ -49,7 +59,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 sh "docker image rm ${MICROSERVICE_NAME}:latest"
-                sh "docker image rm ${AWS_ID}.dkr.ecr.${DEPLOYMENT_REGION}.amazonaws.com/${MICROSERVICE_NAME}"
+                sh 'docker image rm $AWS_ID.dkr.ecr.$DEPLOYMENT_REGION.amazonaws.com/$MICROSERVICE_NAME'
                 sh "docker image ls"
             }
         }
