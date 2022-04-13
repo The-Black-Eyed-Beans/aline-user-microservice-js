@@ -13,6 +13,6 @@ services:
 
 x-aws-cloudformation:
   Resources:
-    BankService:
+    UserService:
       Properties:
         ServiceName: user-service-js
