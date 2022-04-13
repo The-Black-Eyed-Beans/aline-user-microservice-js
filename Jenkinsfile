@@ -9,7 +9,7 @@ pipeline {
         AWS_ID = credentials("aws.id")
         AWS_DEFAULT_REGION = credentials("deployment.region")
         MICROSERVICE_NAME = "user-microservice-js"
-        ECS_SERVICE_NAME = "user-service-js"
+        DEPLOYMENT_NAME = "user-deployment"
     }
 
     stages {
@@ -22,7 +22,6 @@ pipeline {
                     echo "PATH = ${PATH}"
                     echo "M2_HOME = ${M2_HOME}"
                 ''' 
-                sh "docker context use default" 
                 sh "aws s3 cp s3://js-env-vars/backend.env ."
                 sh "ls -a"
             }
@@ -65,23 +64,24 @@ pipeline {
         stage('Deploy'){
             steps {  
                 withAWS(credentials: 'js-aws-credentials', region: 'us-west-1') { 
-                    sh "aws ecr get-login-password | docker login --username AWS --password-stdin 086620157175.dkr.ecr.us-west-1.amazonaws.com"
-                    sh "docker context use js-ecs"
-                    sh "docker compose up -d"
+                    //sh "aws ecr get-login-password | docker login --username AWS --password-stdin 086620157175.dkr.ecr.us-west-1.amazonaws.com"
+                    sh "aws eks update-kubeconfig --name=EKSCluster-js --region=us-west-1"
+                    sh "kubectl apply -f ${DEPLOYMENT_NAME}.yaml"
                 }
             }
         }
 
-        stage ('Update Cluster'){
+        stage ('Update Deployment'){
             steps {
                 script{
                     try{
                         withAWS(credentials: 'js-aws-credentials', region: 'us-west-1') { 
-                            sh "aws ecs update-service --cluster ECScluster-js --service ${ECS_SERVICE_NAME} --force-new-deployment" 
-                            sh "echo 'Updating existing service'"
+                            sh "kubectl scale deploy ${DEPLOYMENT_NAME} --replicas=0"
+                            sh "kubectl scale deploy ${DEPLOYMENT_NAME} --replicas=1"
+                            sh "echo 'Restarted ${DEPLOYMENT_NAME}.'"
                         }
                     }catch(exc){
-                        sh "echo 'Did not find existing service to update, a new one will be created'"
+                        sh "echo 'No existing ${DEPLOYMENT_NAME} was detected, new ${DEPLOYMENT_NAME} was created.'"
                     }
                 }
             }
@@ -89,7 +89,6 @@ pipeline {
 
         stage('Cleanup') {
             steps {
-                sh "docker context use default" 
                 sh "docker image rm ${MICROSERVICE_NAME}:latest"
                 sh 'docker image rm $AWS_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$MICROSERVICE_NAME'
                 sh "docker image prune -f"
