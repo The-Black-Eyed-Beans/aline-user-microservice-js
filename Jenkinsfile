@@ -67,8 +67,8 @@ pipeline {
                     //sh "aws ecr get-login-password | docker login --username AWS --password-stdin 086620157175.dkr.ecr.us-west-1.amazonaws.com"
                     sh "aws eks update-kubeconfig --profile jsherer --name=EKSCluster-js --region=us-west-1"
                     //sh "aws eks update-kubeconfig --name=EKSCluster-js --region=us-west-1"
-                    sh "kubectl apply -f ${DEPLOYMENT_NAME}.yaml"
                 }
+                sh "kubectl apply -f ${DEPLOYMENT_NAME}.yaml"
             }
         }
 
