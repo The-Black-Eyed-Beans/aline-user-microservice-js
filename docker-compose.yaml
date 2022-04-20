@@ -1,0 +1,18 @@
+x-aws-cluster: "ECScluster-js"
+
+version: "3.9"
+services:
+  user:
+    image: 086620157175.dkr.ecr.us-west-1.amazonaws.com/user-microservice-js
+    ports:
+      - "8070:8070"
+    env_file:
+      - ./backend.env
+    environment:
+      - APP_PORT=8083
+
+x-aws-cloudformation:
+  Resources:
+    UserService:
+      Properties:
+        ServiceName: user-service-js
