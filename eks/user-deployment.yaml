@@ -58,3 +58,8 @@ spec:
         ports:
         - name: user
           containerPort: 8070
+      tolerations:
+        - key: "backend"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
